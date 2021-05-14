@@ -12,38 +12,41 @@ namespace Multithreading
         static void Main(string[] args)
         {
             UserManager um = new UserManager();
-            var users = um.InitializeAll(150);
-            
-            List<User> firstPart = users.Take(50).ToList();
-            List<User> secondPart = users.Skip(50).Take(50).ToList();
-            List<User> thirdPart = users.Skip(100).Take(50).ToList();
+            var users = um.InitializeAll(1500);
 
             int counter = 0;
-            
             Stopwatch sw = new Stopwatch();
+            
+            
             sw.Start();
+            um.DoWork(users, CancellationToken.None); // 00:00:23.3498619
+            Console.WriteLine($"\nSYNC TIME: {sw.Elapsed}\n");
+            sw.Restart();
             
+            sw.Start();
+            Thread t = new Thread(() => um.DoWork(users, CancellationToken.None)); // 00:00:23.4280668
+            t.Start();
+            t.Join();
+            Console.WriteLine($"\nTHREAD TIME: {sw.Elapsed}\n");
+            sw.Restart();
             
+            sw.Start();
+            um.DoWorkParallel(users, CancellationToken.None); // 00:00:02.7757682
+            Console.WriteLine($"\nPARALLEL FOREACH TIME: {sw.Elapsed}\n");
+            sw.Restart();
+            
+            sw.Start();
             Parallel.Invoke(() =>
             {
-                um.DoWork(firstPart, CancellationToken.None);
+                um.DoWork(users, CancellationToken.None);
                 Interlocked.Increment(ref counter);
-            },() =>
-            {
-                um.DoWork(secondPart, CancellationToken.None);
-                Interlocked.Increment(ref counter);
-            },() =>
-            {
-                um.DoWork(thirdPart, CancellationToken.None);
-                Interlocked.Increment(ref counter);
-            });
-
+            }); // 00:00:23.3873979
             while (true)
             {
-                if (counter == 3)
+                if (counter == 1)
                 {
-                    Console.WriteLine(sw.Elapsed);
-                    sw.Reset();
+                    Console.WriteLine($"\nPARALLEL FOREACH TIME: {sw.Elapsed}\n");
+                    sw.Stop();
                     break;
                 }
             }
