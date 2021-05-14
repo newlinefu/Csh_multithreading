@@ -22,10 +22,15 @@ namespace Multithreading
             return users;
         }
         
-        public void DoWork(List<User> users)
+        public void DoWork(List<User> users, CancellationToken ct)
         {
             foreach (var user in users)
             {
+                if(ct.IsCancellationRequested)
+                {
+                    ct.ThrowIfCancellationRequested();
+                }
+                
                 Console.WriteLine(user.Name);
                 Thread.Sleep(10);
             }
