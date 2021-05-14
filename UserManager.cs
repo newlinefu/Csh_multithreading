@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Multithreading
 {
     public class UserManager
     {
+        private readonly int _threadsCount;
         public UserManager()
         {
+            _threadsCount = Environment.ProcessorCount;
         }
 
         public List<User> InitializeAll(int size = 1500)
@@ -34,6 +37,28 @@ namespace Multithreading
                 Console.WriteLine(user.Name);
                 Thread.Sleep(10);
             }
+        }
+
+        public void DoWorkParallel(List<User> users, CancellationToken ct, int threadsCount = -1)
+        {
+            if (threadsCount < 1)
+            {
+                threadsCount = _threadsCount;
+            }
+
+            ParallelOptions po = new ParallelOptions();
+            po.MaxDegreeOfParallelism = threadsCount;
+            po.CancellationToken = ct;
+            
+            Parallel.ForEach(
+                users,
+                (u, loopState, index) =>
+                {
+                    Console.WriteLine(u.Name);
+                    Thread.Sleep(10);
+                    po.CancellationToken.ThrowIfCancellationRequested();
+                }
+            );
         }
     }
 }
