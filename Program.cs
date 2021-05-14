@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Multithreading
 {
@@ -16,24 +17,16 @@ namespace Multithreading
             List<User> firstPart = users.Take(50).ToList();
             List<User> secondPart = users.Skip(50).Take(50).ToList();
             List<User> thirdPart = users.Skip(100).Take(50).ToList();
-            
-            Thread firstTr = new Thread(() => um.DoWork(firstPart));
-            Thread secondTr = new Thread(() => um.DoWork(secondPart));
-            Thread thirdTr = new Thread(() => um.DoWork(thirdPart));
-            
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            
-            firstTr.Start();
-            secondTr.Start();
-            thirdTr.Start();
 
-            firstTr.Join();
-            secondTr.Join();
-            thirdTr.Join();
+            // ThreadPool.QueueUserWorkItem((part) => um.DoWork((List<User>) part), firstPart);
+            // ThreadPool.QueueUserWorkItem((part) => um.DoWork((List<User>) part), secondPart);
+            // ThreadPool.QueueUserWorkItem((part) => um.DoWork((List<User>) part), thirdPart);
+
+            Task.Run(() => um.DoWork(firstPart));
+            Task.Run(() => um.DoWork(secondPart));
+            Task.Run(() => um.DoWork(thirdPart));
             
-            Console.WriteLine(sw.Elapsed);
-            sw.Reset();
+            Thread.Sleep(10000);
         }
     }
 }
